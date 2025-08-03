@@ -36,5 +36,6 @@
   "bottomText": "转载请注明出处",
   "ogImage": "https://avatars.githubusercontent.com/u/206492585?v=4&size=256",
   "primerCSS": "<link href='https://mirrors.sustech.edu.cn/cdnjs/ajax/libs/Primer/21.0.7/primer.css' rel='stylesheet' />",
-  "needComment": 0
+  "needComment": 0,
+  "_comment": "UI Initialization Flowchart: flowchart TB\n  A(页面加载) --> B(设置 data-ui-pending 隐藏内容)\n  B --> C(加载插件 JS/CSS)\n  C --> D(重构 .SideNav-item → .post-card)\n  D --> E(计算标签颜色 → 自动对比)\n  E --> F(注入渐变背景 .herobgcolor)\n  F --> G(判断主题模式：light / dark / auto)\n  G --> H(应用卡片/文字颜色样式)\n  H --> I(淡入主内容：移除 data-ui-pending)"
 }
