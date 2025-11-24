@@ -21,17 +21,12 @@ jobs:
         id: pages
         uses: actions/configure-pages@v4
 
-      - name: Check & Install jq
+      - name: Get config.json
         run: |
-          echo "====== check config.json file ======"
-          if [ -f config.json ]; then 
-            cat config.json; 
-          else 
-            echo "config.json not found. Please check!"; 
-            exit 1; 
-          fi
-          echo "====== check config.json end  ======"
-          sudo apt-get install -y jq
+          echo "====== check config.josn file ======"
+          cat config.json
+          echo "====== check config.josn end  ======"
+          sudo apt-get install jq
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -43,50 +38,37 @@ jobs:
           GMEEK_VERSION=$(jq -r ".GMEEK_VERSION" config.json)
           git clone https://github.com/Meekdai/Gmeek.git /opt/Gmeek;
           cd /opt/Gmeek/
-          lastTag=$(git describe --tags $(git rev-list --tags --max-count=1))
-          if [ "$GMEEK_VERSION" == 'last' ]; then 
-            git checkout $lastTag; 
-          else 
-            git checkout $GMEEK_VERSION; 
-          fi;
+          lastTag=$(git describe --tags `git rev-list --tags --max-count=1`)
+          if [ $GMEEK_VERSION == 'last' ]; then git checkout $lastTag; else git checkout $GMEEK_VERSION; fi;
 
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r /opt/Gmeek/requirements.txt
 
-      - name: Generate new HTML
-        env:
-          ISSUE_NUMBER: ${{ github.event.issue.number }}
+      - name: Generate new html
         run: |
           cp -r ./* /opt/Gmeek/
           cd /opt/Gmeek/
-          if [ -z "$ISSUE_NUMBER" ]; then 
-            echo "Issue number not provided. Exiting.";
-            exit 1;
-          else 
-            python Gmeek.py ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} --issue_number "$ISSUE_NUMBER"
-          fi
+          python Gmeek.py ${{ secrets.GITHUB_TOKEN }} ${{ github.repository }} --issue_number '${{ github.event.issue.number }}'
           cp -a /opt/Gmeek/docs ${{ github.workspace }} 
           cp -a /opt/Gmeek/backup ${{ github.workspace }} 
           cp /opt/Gmeek/blogBase.json ${{ github.workspace }} 
           
-      - name: Commit and Push Updates
-        if: success()
+      - name: update html
         run: |
           git config --local user.email "$(jq -r ".email" config.json)"
           git config --local user.name "${{ github.repository_owner }}"
           git add .
-          git commit -m '🎉auto update by Gmeek action' || echo "nothing to commit"
+          git commit -a -m '🎉auto update by Gmeek action' || echo "nothing to commit"
           git push || echo "nothing to push"
           sleep 3
           
-      - name: Upload build artifacts
-        if: success()
+      - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: 'docs/.'
-
+          
   deploy:
     name: Deploy blog
     runs-on: ubuntu-24.04
